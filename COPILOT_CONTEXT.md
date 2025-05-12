@@ -21,10 +21,9 @@ This project is a proof of concept (POC) demonstrating a migration from traditio
 ```
 /src
   /existing - Traditional implementation
-    StoreContext.tsx        - Context definition and hooks for accessing the store
+    StoreContext.tsx        - Context definition for the store
     StoreProvider.tsx       - Provider component with reducer implementation 
-    storeHooks.ts          - Custom hooks for different parts of the store
-    StoreImplementation.tsx - Example component using the store
+    StoreImplementation.tsx - Example component using Traditional implementation
     storage.ts             - AsyncStorage and react-native-keychain implementations
     types.ts               - TypeScript interfaces for the traditional implementation
   
@@ -33,7 +32,7 @@ This project is a proof of concept (POC) demonstrating a migration from traditio
     authStore.ts        - Authentication store using Zustand + MMKV
     PerformanceComparison.tsx - Component to benchmark storage performance
     storage.ts          - MMKV and expo-secure-store implementations
-    StoreExample.tsx    - Example component using Zustand stores
+    StoreExample.tsx    - Example component using Modern implementation
     types.ts            - TypeScript interfaces for the modern implementation
 ```
 
@@ -68,12 +67,8 @@ This project is a proof of concept (POC) demonstrating a migration from traditio
      - Uses useReducer to manage state
      - Implements persistence with AsyncStorage and react-native-keychain
      - Handles loading and saving data
-   - **storeHooks.ts**:
-     - Provides specialized hooks (useAuth, useAppSettings)
-     - Implements action creators for different parts of the store
-     - Abstracts the dispatch logic away from components
 
-3. **storage.ts**:
+2. **storage.ts**:
    - Provides a wrapper around AsyncStorage for general data
    - Provides a wrapper around react-native-keychain for secure data
    - Handles common operations like get, set, remove, and clear

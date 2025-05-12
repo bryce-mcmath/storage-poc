@@ -77,7 +77,7 @@ export const StoreImplementation: React.FC = () => {
           { color: store.settings.theme === 'light' ? '#000' : '#fff' },
         ]}
       >
-        Single Context + Reducer Store
+        Context + Reducer Store, with AsyncStorage
       </Text>
 
       {store.auth.error && <Text style={styles.error}>{store.auth.error}</Text>}

@@ -39,6 +39,14 @@ export const StoreExample: React.FC = () => {
       ]}
     >
       <Text
+        style={[
+          styles.title,
+          { color: theme === 'light' ? '#000' : '#fff' },
+        ]}
+      >
+        Zustand + MMKV
+      </Text>
+      <Text
         style={[styles.text, { color: theme === 'light' ? '#000' : '#fff' }]}
       >
         {isAuthenticated ? `Welcome, ${user?.name}` : 'Please login'}
@@ -86,6 +94,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 20,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
   },
   text: {
     fontSize: 18,

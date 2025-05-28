@@ -1,6 +1,12 @@
 import React, { useState } from 'react'
 import { StatusBar } from 'expo-status-bar'
-import { StyleSheet, View, ScrollView, Button } from 'react-native'
+import {
+  StyleSheet,
+  View,
+  ScrollView,
+  Button,
+  SafeAreaView,
+} from 'react-native'
 
 // Import existing implementation components
 import { StoreProvider } from './src/existing/StoreProvider'
@@ -21,27 +27,33 @@ export default function App() {
   >('context')
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <ScrollView style={styles.contentContainer}>
         {implementationView === 'context' ? (
           <StoreProvider>
-            <OldImplementation migrate={async () => {
-              console.log('Migrating from old to new implementation...');
-              const migrated = await migrateFromExistingToNew();
-              if (migrated) {
-                setImplementationView('zustand');
-              }
-            }} />
+            <OldImplementation
+              migrate={async () => {
+                console.log('Migrating from old to new implementation...')
+                const migrated = await migrateFromExistingToNew()
+                if (migrated) {
+                  setImplementationView('zustand')
+                }
+              }}
+            />
           </StoreProvider>
         ) : implementationView === 'zustand' ? (
-          <NewImplementation migrate={async () => {
-            // No migration back to context needed
-            console.log('Migration from new to old is not supported, clearing all data and switching to old implementation');
-            // Just switch the view directly
-            await secureStorageService.clearAllKeychainData();
-            await storageService.clear();
-            setImplementationView('context');
-          }} />
+          <NewImplementation
+            migrate={async () => {
+              // No migration back to context needed
+              console.log(
+                'Migration from new to old is not supported, clearing all data and switching to old implementation',
+              )
+              // Just switch the view directly
+              await secureStorageService.clearAllKeychainData()
+              await storageService.clear()
+              setImplementationView('context')
+            }}
+          />
         ) : (
           <PerformanceComparison />
         )}
@@ -51,12 +63,12 @@ export default function App() {
               title="View Performance Comparison"
               onPress={() => setImplementationView('performance')}
             />
-          </View>  
+          </View>
         )}
       </ScrollView>
 
       <StatusBar style="auto" />
-    </View>
+    </SafeAreaView>
   )
 }
 
@@ -64,36 +76,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
-  },
-  header: {
-    paddingTop: 60,
-    paddingBottom: 20,
-    paddingHorizontal: 16,
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 3,
-  },
-  headerLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#333',
-  },
-  pickerContainer: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 4,
-    backgroundColor: '#fff',
-    justifyContent: 'flex-start',
-    color: '#333',
-    fontSize: 16,
-    flexShrink: 1,
-  },
-  picker: {
-    flexShrink: 1,
   },
   contentContainer: {
     flex: 1,

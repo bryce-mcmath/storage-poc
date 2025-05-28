@@ -1,52 +1,59 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
-import { AuthState, User } from './types'
+import { AuthState } from './types'
 import { secureStorageService } from './storage'
 import { zustandMMKVStorage } from './mmkvZustandAdapter'
 
 // Create the auth store with persistence and secure storage
-export const useAuthStore = create<AuthState>()(
+export const useAuthStore = create<
+  AuthState & {
+    login: (email: string, password: string) => Promise<void>;
+    logout: () => Promise<void>;
+    createAccount: () => Promise<void>;
+    setDidAuthenticate: (value: boolean) => void;
+  }
+>()(
   persist(
-    set => ({
-      user: null,
-      token: null,
-      isAuthenticated: false,
-      isLoading: true,
-      error: null,
+    (set) => ({
+      didAuthenticate: false,
+      accountCreated: false,
 
-      // Login function
-      login: async (email: string, password: string) => {
-        set({ isLoading: true, error: null })
-
+      // Create account function
+      createAccount: async () => {
         try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 1000))
-
-          // Mock response
-          const user: User = { id: '123', name: 'John Doe', email }
-          const token = 'mock-token-123'
-
-          // Store token securely
-          await secureStorageService.setToken(token)
+          // Simulate account creation
+          await new Promise(resolve => setTimeout(resolve, 500))
 
           // Update the store
           set({
-            user,
-            token,
-            isAuthenticated: true,
-            isLoading: false,
-            error: null,
+            accountCreated: true,
+            didAuthenticate: true,
           })
         } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : 'Unknown error occurred'
+          console.error('Account creation error:', error)
+        }
+      },
+
+      // Set authentication status
+      setDidAuthenticate: (value: boolean) => {
+        set({ didAuthenticate: value })
+      },
+
+      // Login function
+      login: async (email: string, password: string) => {
+        try {
+          // Simulate API call
+          await new Promise(resolve => setTimeout(resolve, 500))
+
+          // Store token securely (simplified)
+          await secureStorageService.setToken('auth-token')
+
+          // Update the store
           set({
-            user: null,
-            token: null,
-            isAuthenticated: false,
-            isLoading: false,
-            error: errorMessage,
+            didAuthenticate: true,
           })
+        } catch (error) {
+          console.error('Login error:', error)
         }
       },
 
@@ -56,10 +63,7 @@ export const useAuthStore = create<AuthState>()(
           await secureStorageService.clearCredentials()
 
           set({
-            user: null,
-            token: null,
-            isAuthenticated: false,
-            error: null,
+            didAuthenticate: false,
           })
         } catch (error) {
           console.error('Logout error:', error)
@@ -70,8 +74,7 @@ export const useAuthStore = create<AuthState>()(
       name: 'auth-storage',
       storage: createJSONStorage(() => zustandMMKVStorage),
       partialize: state => ({
-        user: state.user,
-        // We don't persist the token in Zustand since it's stored in secure storage
+        accountCreated: state.accountCreated,
       }),
       onRehydrateStorage: () => async state => {
         if (state) {
@@ -80,12 +83,8 @@ export const useAuthStore = create<AuthState>()(
 
           // Update state with the token
           if (token) {
-            state.token = token
-            state.isAuthenticated = true
+            state.didAuthenticate = true
           }
-
-          // Mark loading as complete
-          state.isLoading = false
         }
       },
     },

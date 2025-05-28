@@ -5,10 +5,10 @@ import { Picker } from '@react-native-picker/picker'
 
 // Import existing implementation components
 import { StoreProvider } from './src/existing/StoreProvider'
-import { StoreImplementation } from './src/existing/StoreImplementation'
+import { OldImplementation } from './src/existing/OldImplementation'
 
 // Import new implementation components
-import { StoreExample } from './src/new/StoreExample'
+import { NewImplementation } from './src/new/NewImplementation'
 import { PerformanceComparison } from './src/new/PerformanceComparison'
 
 // Main app component
@@ -37,10 +37,10 @@ export default function App() {
       <ScrollView style={styles.contentContainer}>
         {implementationView === 'context' ? (
           <StoreProvider>
-            <StoreImplementation />
+            <OldImplementation migrate={() => setImplementationView('zustand')} />
           </StoreProvider>
         ) : implementationView === 'zustand' ? (
-          <StoreExample />
+          <NewImplementation migrate={() => setImplementationView('context')} />
         ) : (
           <PerformanceComparison />
         )}

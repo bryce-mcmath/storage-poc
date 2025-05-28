@@ -2,24 +2,23 @@ import { createContext, useContext } from 'react'
 import { StoreState, StoreAction } from './types'
 
 // Define the context type with dispatch
-export interface StoreContextType {
-  store: StoreState
+export type StoreContextType = [
+  store: StoreState,
   dispatch: React.Dispatch<StoreAction>
-}
+]
 
 // Initial state
 export const initialState: StoreState = {
-  auth: {
-    user: null,
-    token: null,
-    isAuthenticated: false,
-    isLoading: true,
-    error: null,
+  stateLoaded: false,
+  authentication: {
+    didAuthenticate: false,
+    accountCreated: false,
   },
   settings: {
     theme: 'light',
     language: 'en',
     notifications: true,
+    biometricsEnabled: false,
   },
 }
 

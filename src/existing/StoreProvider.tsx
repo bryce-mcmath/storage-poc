@@ -1,71 +1,40 @@
-import React, { useReducer, useEffect, useMemo } from 'react'
+import React, { useReducer, useEffect } from 'react'
 import { StoreContext, initialState } from './StoreContext'
-import { StoreState, StoreAction, User } from './types'
-import { secureStorageService, storageService } from './storage'
+import { StoreState, StoreAction, AuthState, SettingsState } from './types'
+import { storageService } from './storage'
 
 // The reducer function
 const storeReducer = (store: StoreState, action: StoreAction): StoreState => {
   switch (action.type) {
-    // Auth cases
-    case 'LOGIN_START':
+    case 'STATE_DISPATCH': {
+      const newState: Partial<StoreState> = action?.payload ?? {}
+      return { ...store, ...newState, stateLoaded: true }
+    }
+
+    case 'CREATE_ACCOUNT':
       return {
         ...store,
-        auth: {
-          ...store.auth,
-          isLoading: true,
-          error: null,
+        authentication: {
+          ...store.authentication,
+          accountCreated: true,
         },
       }
 
-    case 'LOGIN_SUCCESS':
+    case 'DID_AUTHENTICATE':
+      const didAuthenticate: boolean = action.payload ?? true
       return {
         ...store,
-        auth: {
-          ...store.auth,
-          isAuthenticated: true,
-          isLoading: false,
-          user: action.payload.user,
-          token: action.payload.token,
-          error: null,
-        },
+        authentication: { ...store.authentication, didAuthenticate },
       }
 
-    case 'LOGIN_FAILURE':
+    case 'TOGGLE_BIOMETRICS':
+      const biometricsEnabled: boolean = action.payload ?? !store.settings.biometricsEnabled
       return {
         ...store,
-        auth: {
-          ...store.auth,
-          isAuthenticated: false,
-          isLoading: false,
-          user: null,
-          token: null,
-          error: action.payload,
-        },
-      }
-
-    case 'LOGOUT':
-      return {
-        ...store,
-        auth: {
-          ...store.auth,
-          isAuthenticated: false,
-          user: null,
-          token: null,
-          error: null,
-        },
-      }
-
-    case 'RESTORE_TOKEN':
-      return {
-        ...store,
-        auth: {
-          ...store.auth,
-          isAuthenticated: !!action.payload.token,
-          isLoading: false,
-          user: action.payload.user,
-          token: action.payload.token,
-          error: null,
-        },
+        settings: {
+          ...store.settings,
+          biometricsEnabled,
+        }
       }
 
     // App settings cases
@@ -96,15 +65,6 @@ const storeReducer = (store: StoreState, action: StoreAction): StoreState => {
         },
       }
 
-    case 'LOAD_SETTINGS':
-      return {
-        ...store,
-        settings: {
-          ...store.settings,
-          ...action.payload,
-        },
-      }
-
     default:
       return store
   }
@@ -116,62 +76,32 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [store, dispatch] = useReducer(storeReducer, initialState)
 
-  // Effect to bootstrap auth store and settings
   useEffect(() => {
-    const bootstrapAsync = async () => {
+    // Load initial auth state from secure storage
+    const loadState = async () => {
       try {
-        // Load auth store
-        const token = await secureStorageService.getToken()
-        const user = token ? await storageService.getItem<User>('user') : null
-
-        // Restore token and user
-        dispatch({
-          type: 'RESTORE_TOKEN',
-          payload: { user, token: token || null },
-        })
-
-        // Load app settings
-        const savedSettings = await storageService.getItem('app_settings')
-        if (savedSettings) {
-          dispatch({
-            type: 'LOAD_SETTINGS',
-            payload: savedSettings,
-          })
+        const authentication = await storageService.getItem<AuthState>('authentication')
+        const settings = await storageService.getItem<SettingsState>('app_settings')
+        const state: Partial<StoreState> = {
+          ...initialState,
+          authentication: authentication || initialState.authentication,
+          settings: settings || initialState.settings, 
         }
-      } catch (e) {
-        console.error('Failed to load persisted store:', e)
+        
         dispatch({
-          type: 'LOGIN_FAILURE',
-          payload: 'Failed to restore application store',
+            type: 'STATE_DISPATCH',
+            payload: state
         })
+      } catch (e) {
+        console.error('Failed to load auth state:', e)
       }
     }
 
-    bootstrapAsync()
+    loadState()
   }, [])
 
-  // Effect to save settings when they change
-  useEffect(() => {
-    if (store.auth.isLoading) return // Skip initial load
-
-    const saveSettings = async () => {
-      try {
-        await storageService.setItem('app_settings', store.settings)
-      } catch (e) {
-        console.error('Failed to save settings:', e)
-      }
-    }
-
-    saveSettings()
-  }, [store.settings])
-
-  // Memoize the context value to prevent unnecessary renders
-  const contextValue = useMemo(() => {
-    return { store, dispatch }
-  }, [store])
-
   return (
-    <StoreContext.Provider value={contextValue}>
+    <StoreContext.Provider value={[store, dispatch]}>
       {children}
     </StoreContext.Provider>
   )

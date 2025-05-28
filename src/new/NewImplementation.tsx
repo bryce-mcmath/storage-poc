@@ -1,0 +1,331 @@
+import React, { useEffect, useState } from 'react'
+import { useAuthStore } from './authStore'
+import { useSettingsStore } from './settingsStore'
+import { Text, View, Button, StyleSheet, Alert, Platform } from 'react-native'
+import {
+  clearAllKeychainData,
+  isBiometricsActive,
+  loadWalletSecret,
+  setPIN,
+  checkPIN,
+} from '../existing/keychain'
+import { secureStorageService, storageService } from './storage'
+
+type NewImplementationProps = {
+  migrate: () => void
+}
+
+// Example component that uses both stores
+export const NewImplementation: React.FC<NewImplementationProps> = ({ migrate }) => {
+  // Auth store values and actions
+  const { 
+    didAuthenticate, 
+    accountCreated, 
+    login, 
+    logout, 
+    createAccount,
+    setDidAuthenticate
+  } = useAuthStore()
+
+  // Settings store values and actions
+  const { 
+    theme, 
+    language, 
+    notifications, 
+    biometricsEnabled,
+    setTheme, 
+    toggleNotifications,
+    toggleBiometrics
+  } = useSettingsStore()
+
+  // Local state
+  const [biometricSupported, setBiometricSupported] = useState<boolean>(false)
+  const [loading, setLoading] = useState<boolean>(false)
+
+  // Check if biometrics is available on device
+  useEffect(() => {
+    checkBiometricAvailability()
+  }, [])
+
+  const checkBiometricAvailability = async () => {
+    try {
+      const isSupported = await isBiometricsActive()
+      setBiometricSupported(isSupported)
+
+      if (!isSupported) {
+        console.log('Biometrics not available or not enrolled')
+      }
+    } catch (error) {
+      console.error('Error checking biometric availability:', error)
+    }
+  }
+
+  // Handle create account
+  const handleCreateAccount = async () => {
+    try {
+      setLoading(true)
+      if (biometricsEnabled) {
+        await createAccountWithBiometrics()
+      } else {
+        await createAccountWithoutBiometrics()
+      }
+      await createAccount()
+    } catch (error) {
+      console.error('Account creation failed:', error)
+      Alert.alert(
+        'Error',
+        `Failed to create account: ${(error as Error).message}`,
+      )
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Create account with biometrics
+  const createAccountWithBiometrics = async () => {
+    try {
+      if (!biometricSupported) {
+        Alert.alert(
+          'Error',
+          'Biometric authentication is not available on this device',
+        )
+        throw new Error('Biometrics not supported')
+      }
+
+      // For demo purposes, we're using a hardcoded PIN
+      // In a real app, you'd get this from user input
+      const pin = '123456'
+      const valid = await setPIN(pin, true)
+      if (!valid) {
+        Alert.alert('Error', 'Failed to store secret')
+      }
+    } catch (error) {
+      console.error('Error saving secret with biometrics:', error)
+      Alert.alert(
+        'Error',
+        `Failed to store secret: ${(error as Error).message}`,
+      )
+    }
+  }
+
+  // Create account without biometrics
+  const createAccountWithoutBiometrics = async () => {
+    const pin = '123456'
+    const valid = await setPIN(pin, false)
+    if (!valid) {
+      Alert.alert('Error', 'Failed to store secret')
+    }
+  }
+
+  // Handle unlock
+  const handleUnlock = async () => {
+    try {
+      setLoading(true)
+      if (biometricsEnabled) {
+        await unlockWithBiometrics()
+      } else {
+        await unlockWithPIN()
+      }
+    } catch (error) {
+      console.error('Unlock failed:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Unlock with biometrics
+  const unlockWithBiometrics = async () => {
+    try {
+      if (!biometricSupported) {
+        Alert.alert(
+          'Error',
+          'Biometric authentication is not available on this device',
+        )
+        throw new Error('Biometrics not supported')
+      }
+
+      const biometricPromptTitle = 'Authentication Required'
+      const biometricPromptDesc =
+        'Please authenticate using your biometrics to access your wallet'
+
+      const secret = await loadWalletSecret(
+        biometricPromptTitle,
+        biometricPromptDesc,
+      )
+
+      if (secret && secret.key) {
+        setDidAuthenticate(true)
+        Alert.alert('Success', 'Authentication successful')
+      }
+    } catch (error) {
+      console.error('Error during biometric authentication:', error)
+      Alert.alert('Authentication Failed', `${(error as Error).message}`)
+    }
+  }
+
+  // Unlock with PIN
+  const unlockWithPIN = async () => {
+    try {
+      // For demo purposes, we're using a hardcoded PIN
+      // In a real app, you'd get this from user input
+      const pin = '123456'
+
+      // Generate the secret from the PIN
+      const valid = await checkPIN(pin)
+
+      if (valid) {
+        setDidAuthenticate(true)
+        Alert.alert('Success', 'Authentication successful')
+      } else {
+        Alert.alert('Authentication Failed', 'Invalid PIN or secret mismatch')
+      }
+    } catch (error) {
+      console.error('Error during PIN authentication:', error)
+      Alert.alert('Authentication Failed', `${(error as Error).message}`)
+    }
+  }
+
+  // Handle logout
+  const handleLogout = async () => {
+    await logout()
+  }
+
+  // Toggle theme
+  const handleToggleTheme = () => {
+    setTheme(theme === 'light' ? 'dark' : 'light')
+  }
+
+  // Handle wipe
+  const handleWipe = async () => {
+    try {
+      await clearAllKeychainData()
+      await storageService.clear()
+      setDidAuthenticate(false)
+    } catch (error) {
+      console.error('Failed to wipe data:', error)
+    }
+  }
+
+  // Handle migrate
+  const handleMigrate = () => {
+    console.log('Migrating from new to old...')
+    migrate()
+  }
+
+  // Loading state removed as we've simplified the state
+
+  return (
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: theme === 'light' ? '#fff' : '#333' },
+      ]}
+    >
+      <Text
+        style={[
+          styles.title,
+          { color: theme === 'light' ? '#000' : '#fff' },
+        ]}
+      >
+        Zustand + MMKV
+      </Text>
+      <Text
+        style={[styles.text, { color: theme === 'light' ? '#000' : '#fff' }]}
+      >
+        {didAuthenticate ? 'Welcome' : 'Please login'}
+      </Text>
+
+      {didAuthenticate ? (
+        <>
+          <Text
+            style={[styles.text, { color: theme === 'light' ? '#000' : '#fff' }]}
+          >
+            Current language: {language}
+          </Text>
+
+          <Text
+            style={[styles.text, { color: theme === 'light' ? '#000' : '#fff' }]}
+          >
+            Notifications: {notifications ? 'Enabled' : 'Disabled'}
+          </Text>
+          <View style={styles.buttonContainer}>
+            <Button
+              title={`Switch to ${
+                theme === 'light' ? 'Dark' : 'Light'
+              } Theme`}
+              onPress={handleToggleTheme}
+            />
+          </View>
+
+          <View style={styles.buttonContainer}>
+            <Button
+              title={`${
+                notifications ? 'Disable' : 'Enable'
+              } Notifications`}
+              onPress={toggleNotifications}
+            />
+          </View>
+          <View style={styles.buttonContainer}>
+            <Button title="Logout" onPress={handleLogout} />
+          </View>
+        </>
+      ) : (
+        <>
+          <View style={styles.buttonContainer}>
+            <Text
+              style={[
+                styles.text,
+                { color: theme === 'light' ? '#000' : '#fff' },
+              ]}
+            >
+              Biometrics:{' '}
+              {biometricsEnabled ? 'Enabled' : 'Disabled'}
+            </Text>
+            <Button
+              title={
+                biometricsEnabled
+                  ? 'Disable Biometrics'
+                  : 'Enable Biometrics'
+              }
+              onPress={toggleBiometrics}
+            />
+          </View>
+          <View style={styles.buttonContainer}>
+            {accountCreated ? (
+              <Button title="Login" onPress={handleUnlock} />
+            ) : (
+              <Button title="Create account" onPress={handleCreateAccount} />
+            )}
+          </View>
+        </>
+      )}
+      
+      {/* Always visible buttons */}
+      <View style={styles.buttonContainer}>
+        <Button title="Wipe Data" onPress={handleWipe} />
+        <Button title="Migrate to Old Store" onPress={handleMigrate} />
+      </View>
+    </View>
+  )
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 20,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  text: {
+    fontSize: 18,
+    marginBottom: 20,
+  },
+  buttonContainer: {
+    marginBottom: 20,
+  },
+})

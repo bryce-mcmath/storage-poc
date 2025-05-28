@@ -5,15 +5,13 @@ import {
   clearAllKeychainData,
   isBiometricsActive,
   loadWalletSecret,
-  secretForPIN,
-  storeWalletSecret,
   checkPIN,
   setPIN,
 } from './keychain'
-import { secureStorageService, storageService } from './storage'
+import { storageService } from './storage'
 
 type OldImplementationProps = {
-  migrate: () => void
+  migrate: () => Promise<void>
 }
 
 // Component that demonstrates using the store hooks
@@ -204,9 +202,9 @@ export const OldImplementation: React.FC<OldImplementationProps> = ({ migrate })
     }
   }
 
-  const handleMigrate = () => {
+  const handleMigrate = async () => {
     console.log('Migrating from old to new...')
-    migrate()
+    await migrate()
   }
 
   return (

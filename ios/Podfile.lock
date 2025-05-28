@@ -1,5 +1,6 @@
 PODS:
   - boost (1.83.0)
+  - CatCrypto (0.3.2)
   - DoubleConversion (1.1.6)
   - EXConstants (15.4.6):
     - ExpoModulesCore
@@ -80,6 +81,8 @@ PODS:
   - ExpoFileSystem (16.0.9):
     - ExpoModulesCore
   - ExpoKeepAwake (12.8.2):
+    - ExpoModulesCore
+  - ExpoLocalAuthentication (13.8.0):
     - ExpoModulesCore
   - ExpoModulesCore (1.11.14):
     - glog
@@ -1151,6 +1154,9 @@ PODS:
     - React-jsi (= 0.73.6)
     - React-logger (= 0.73.6)
     - React-perflogger (= 0.73.6)
+  - RNArgon2 (2.0.1):
+    - CatCrypto
+    - React-Core
   - RNCAsyncStorage (1.21.0):
     - React-Core
   - RNCPicker (2.11.0):
@@ -1174,6 +1180,7 @@ DEPENDENCIES:
   - expo-dev-menu-interface (from `../node_modules/expo-dev-menu-interface/ios`)
   - ExpoFileSystem (from `../node_modules/expo-file-system/ios`)
   - ExpoKeepAwake (from `../node_modules/expo-keep-awake/ios`)
+  - ExpoLocalAuthentication (from `../node_modules/expo-local-authentication/ios`)
   - ExpoModulesCore (from `../node_modules/expo-modules-core`)
   - ExpoSecureStore (from `../node_modules/expo-secure-store/ios`)
   - EXUpdatesInterface (from `../node_modules/expo-updates-interface/ios`)
@@ -1226,6 +1233,7 @@ DEPENDENCIES:
   - React-runtimescheduler (from `../node_modules/react-native/ReactCommon/react/renderer/runtimescheduler`)
   - React-utils (from `../node_modules/react-native/ReactCommon/react/utils`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
+  - RNArgon2 (from `../node_modules/react-native-argon2`)
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
   - "RNCPicker (from `../node_modules/@react-native-picker/picker`)"
   - RNKeychain (from `../node_modules/react-native-keychain`)
@@ -1233,6 +1241,7 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
+    - CatCrypto
     - fmt
     - libevent
     - MMKV
@@ -1266,6 +1275,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-file-system/ios"
   ExpoKeepAwake:
     :path: "../node_modules/expo-keep-awake/ios"
+  ExpoLocalAuthentication:
+    :path: "../node_modules/expo-local-authentication/ios"
   ExpoModulesCore:
     :path: "../node_modules/expo-modules-core"
   ExpoSecureStore:
@@ -1365,6 +1376,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/react/utils"
   ReactCommon:
     :path: "../node_modules/react-native/ReactCommon"
+  RNArgon2:
+    :path: "../node_modules/react-native-argon2"
   RNCAsyncStorage:
     :path: "../node_modules/@react-native-async-storage/async-storage"
   RNCPicker:
@@ -1376,6 +1389,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   boost: d3f49c53809116a5d38da093a8aa78bf551aed09
+  CatCrypto: a477899b6be4954e75be4897e732da098cc0a5a8
   DoubleConversion: fea03f2699887d960129cc54bba7e52542b6f953
   EXConstants: c82ef9280044accc91fb6082047afdc9a408f61a
   EXFont: 64e653a110eee050ad80dfcd676c4bada0a1ff92
@@ -1388,6 +1402,7 @@ SPEC CHECKSUMS:
   expo-dev-menu-interface: 44e69ddff62bbc6c5418c200e657635720b5a480
   ExpoFileSystem: df58e1eb2a4d6f1006a1ca70bddfbbf63e52fa4f
   ExpoKeepAwake: 3b8cf8533b9212500565a1e41fb080fc5af29918
+  ExpoLocalAuthentication: 5967317248e27c53f77c61ff5608d74329b4c41d
   ExpoModulesCore: 43ebd65adf2c0e6ffb0de24a41f8f7de12829331
   ExpoSecureStore: 4cec57fd2c40dcff05ce2186c39afc1af39d213c
   EXUpdatesInterface: 3e444e2093e25b7ca0999a7d8c16e8392dee70c3
@@ -1441,6 +1456,7 @@ SPEC CHECKSUMS:
   React-runtimescheduler: a01dfb7ca980edebcc7d2d289ca900dea5d7e28b
   React-utils: 288c9cb9a73bb150c273c84df7c2f8546f28e23f
   ReactCommon: 2e5492a3e3a8e72d635c266405e49d12627e5bf0
+  RNArgon2: 708e188b7a4d4ec8baf62463927c47abef453a94
   RNCAsyncStorage: a03b770a50541a761447cea9c24536047832124d
   RNCPicker: 124b4fb5859ba1a3fd53a91e16d1e7a0fc016e59
   RNKeychain: bbe2f6d5cc008920324acb49ef86ccc03d3b38e4

@@ -2,17 +2,10 @@ import React, { useEffect, useState } from 'react'
 import { useAuthStore } from './authStore'
 import { useSettingsStore } from './settingsStore'
 import { Text, View, Button, StyleSheet, Alert, Platform } from 'react-native'
-import {
-  clearAllKeychainData,
-  isBiometricsActive,
-  loadWalletSecret,
-  setPIN,
-  checkPIN,
-} from '../existing/keychain'
 import { secureStorageService, storageService } from './storage'
 
 type NewImplementationProps = {
-  migrate: () => void
+  migrate: () => Promise<void>
 }
 
 // Example component that uses both stores
@@ -20,9 +13,7 @@ export const NewImplementation: React.FC<NewImplementationProps> = ({ migrate })
   // Auth store values and actions
   const { 
     didAuthenticate, 
-    accountCreated, 
-    login, 
-    logout, 
+    accountCreated,
     createAccount,
     setDidAuthenticate
   } = useAuthStore()
@@ -49,7 +40,7 @@ export const NewImplementation: React.FC<NewImplementationProps> = ({ migrate })
 
   const checkBiometricAvailability = async () => {
     try {
-      const isSupported = await isBiometricsActive()
+      const isSupported = await secureStorageService.isBiometricsActive()
       setBiometricSupported(isSupported)
 
       if (!isSupported) {
@@ -95,7 +86,7 @@ export const NewImplementation: React.FC<NewImplementationProps> = ({ migrate })
       // For demo purposes, we're using a hardcoded PIN
       // In a real app, you'd get this from user input
       const pin = '123456'
-      const valid = await setPIN(pin, true)
+      const valid = await secureStorageService.setPIN(pin, true)
       if (!valid) {
         Alert.alert('Error', 'Failed to store secret')
       }
@@ -111,7 +102,7 @@ export const NewImplementation: React.FC<NewImplementationProps> = ({ migrate })
   // Create account without biometrics
   const createAccountWithoutBiometrics = async () => {
     const pin = '123456'
-    const valid = await setPIN(pin, false)
+    const valid = await secureStorageService.setPIN(pin, false)
     if (!valid) {
       Alert.alert('Error', 'Failed to store secret')
     }
@@ -148,7 +139,7 @@ export const NewImplementation: React.FC<NewImplementationProps> = ({ migrate })
       const biometricPromptDesc =
         'Please authenticate using your biometrics to access your wallet'
 
-      const secret = await loadWalletSecret(
+      const secret = await secureStorageService.loadWalletSecret(
         biometricPromptTitle,
         biometricPromptDesc,
       )
@@ -171,7 +162,7 @@ export const NewImplementation: React.FC<NewImplementationProps> = ({ migrate })
       const pin = '123456'
 
       // Generate the secret from the PIN
-      const valid = await checkPIN(pin)
+      const valid = await secureStorageService.checkPIN(pin)
 
       if (valid) {
         setDidAuthenticate(true)
@@ -187,7 +178,7 @@ export const NewImplementation: React.FC<NewImplementationProps> = ({ migrate })
 
   // Handle logout
   const handleLogout = async () => {
-    await logout()
+    setDidAuthenticate(false)
   }
 
   // Toggle theme
@@ -198,7 +189,7 @@ export const NewImplementation: React.FC<NewImplementationProps> = ({ migrate })
   // Handle wipe
   const handleWipe = async () => {
     try {
-      await clearAllKeychainData()
+      await secureStorageService.clearAllKeychainData()
       await storageService.clear()
       setDidAuthenticate(false)
     } catch (error) {
@@ -207,9 +198,9 @@ export const NewImplementation: React.FC<NewImplementationProps> = ({ migrate })
   }
 
   // Handle migrate
-  const handleMigrate = () => {
-    console.log('Migrating from new to old...')
-    migrate()
+  const handleMigrate = async () => {
+    console.log('Switching to old implementation...')
+    await migrate()
   }
 
   // Loading state removed as we've simplified the state
@@ -303,7 +294,7 @@ export const NewImplementation: React.FC<NewImplementationProps> = ({ migrate })
       {/* Always visible buttons */}
       <View style={styles.buttonContainer}>
         <Button title="Wipe Data" onPress={handleWipe} />
-        <Button title="Migrate to Old Store" onPress={handleMigrate} />
+        <Button title="Switch to Old View" onPress={handleMigrate} />
       </View>
     </View>
   )

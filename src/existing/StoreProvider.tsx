@@ -3,71 +3,95 @@ import { StoreContext, initialState } from './StoreContext'
 import { StoreState, StoreAction, AuthState, SettingsState } from './types'
 import { storageService } from './storage'
 
+// Helper function to persist state to AsyncStorage
+const persistState = (state: StoreState) => {
+  // Only persist if state is loaded (to avoid overwriting during initial load)
+  if (state.stateLoaded) {
+    // Save authentication state
+    storageService.setItem('authentication', state.authentication);
+    // Save settings state
+    storageService.setItem('app_settings', state.settings);
+  }
+};
+
 // The reducer function
 const storeReducer = (store: StoreState, action: StoreAction): StoreState => {
+  let newState: StoreState;
+  
   switch (action.type) {
     case 'STATE_DISPATCH': {
-      const newState: Partial<StoreState> = action?.payload ?? {}
-      return { ...store, ...newState, stateLoaded: true }
+      const stateUpdate: Partial<StoreState> = action?.payload ?? {}
+      newState = { ...store, ...stateUpdate, stateLoaded: true };
+      break;
     }
 
     case 'CREATE_ACCOUNT':
-      return {
+      newState = {
         ...store,
         authentication: {
           ...store.authentication,
           accountCreated: true,
         },
-      }
+      };
+      break;
 
     case 'DID_AUTHENTICATE':
       const didAuthenticate: boolean = action.payload ?? true
-      return {
+      newState = {
         ...store,
         authentication: { ...store.authentication, didAuthenticate },
-      }
+      };
+      break;
 
     case 'TOGGLE_BIOMETRICS':
       const biometricsEnabled: boolean = action.payload ?? !store.settings.biometricsEnabled
-      return {
+      newState = {
         ...store,
         settings: {
           ...store.settings,
           biometricsEnabled,
         }
-      }
+      };
+      break;
 
-    // App settings cases
     case 'SET_THEME':
-      return {
+      newState = {
         ...store,
         settings: {
           ...store.settings,
           theme: action.payload,
         },
-      }
+      };
+      break;
 
     case 'SET_LANGUAGE':
-      return {
+      newState = {
         ...store,
         settings: {
           ...store.settings,
           language: action.payload,
         },
-      }
+      };
+      break;
 
     case 'TOGGLE_NOTIFICATIONS':
-      return {
+      newState = {
         ...store,
         settings: {
           ...store.settings,
           notifications: !store.settings.notifications,
         },
-      }
+      };
+      break;
 
     default:
-      return store
+      return store;
   }
+  
+  // Persist the new state to AsyncStorage whenever it changes
+  persistState(newState);
+  
+  return newState;
 }
 
 // Provider component

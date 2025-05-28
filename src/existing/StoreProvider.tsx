@@ -3,18 +3,29 @@ import { StoreContext, initialState } from './StoreContext'
 import { StoreState, StoreAction, AuthState, SettingsState } from './types'
 import { storageService } from './storage'
 
-// Helper function to persist state to AsyncStorage
 const persistState = (state: StoreState) => {
-  // Only persist if state is loaded (to avoid overwriting during initial load)
   if (state.stateLoaded) {
-    // Save authentication state
     storageService.setItem('authentication', state.authentication);
-    // Save settings state
     storageService.setItem('app_settings', state.settings);
   }
 };
 
-// The reducer function
+// Reset state to initial values
+export const resetState = async (
+  dispatch: React.Dispatch<StoreAction>,
+  preserveStorage: boolean = false
+): Promise<void> => {
+  dispatch({
+    type: 'STATE_DISPATCH',
+    payload: { ...initialState, stateLoaded: true }
+  });
+  
+  if (!preserveStorage) {
+    await storageService.removeItem('authentication');
+    await storageService.removeItem('app_settings');
+  }
+};
+
 const storeReducer = (store: StoreState, action: StoreAction): StoreState => {
   let newState: StoreState;
   
@@ -88,20 +99,16 @@ const storeReducer = (store: StoreState, action: StoreAction): StoreState => {
       return store;
   }
   
-  // Persist the new state to AsyncStorage whenever it changes
   persistState(newState);
-  
   return newState;
 }
 
-// Provider component
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [store, dispatch] = useReducer(storeReducer, initialState)
 
   useEffect(() => {
-    // Load initial auth state from secure storage
     const loadState = async () => {
       try {
         const authentication = await storageService.getItem<AuthState>('authentication')

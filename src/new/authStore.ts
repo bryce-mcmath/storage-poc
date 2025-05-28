@@ -1,41 +1,42 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { AuthState } from './types'
-import { secureStorageService } from './storage'
 import { zustandMMKVStorage } from './mmkvZustandAdapter'
 
-// Create the auth store with persistence and secure storage
+const initialAuthState: AuthState = {
+  didAuthenticate: false,
+  accountCreated: false,
+}
+
 export const useAuthStore = create<
   AuthState & {
     createAccount: () => void;
     setDidAuthenticate: (value: boolean) => void;
+    resetState: () => void;
   }
 >()(
   persist(
     (set) => ({
-      didAuthenticate: false,
-      accountCreated: false,
+      ...initialAuthState,
 
-      // Create account function
       createAccount: () => {
-        // Update the store
         set({
           accountCreated: true,
           didAuthenticate: true,
         })
       },
 
-      // Set authentication status
       setDidAuthenticate: (value: boolean) => {
         set({ didAuthenticate: value })
+      },
+      
+      resetState: () => {
+        set(initialAuthState)
       },
     }),
     {
       name: 'auth-storage',
       storage: createJSONStorage(() => zustandMMKVStorage),
-      partialize: state => ({
-        accountCreated: state.accountCreated,
-      }),
     },
   ),
 )

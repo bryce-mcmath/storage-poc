@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { StyleSheet, Text, View, Button, Alert, Platform } from 'react-native'
+import { StyleSheet, Text, View, Button, Alert, Platform, ActivityIndicator } from 'react-native'
 import { initialState, useStore } from './StoreContext'
 import {
   clearAllKeychainData,
@@ -8,18 +8,15 @@ import {
   checkPIN,
   setPIN,
 } from './keychain'
-import { storageService } from './storage'
+import { resetState } from './StoreProvider'
 
 type OldImplementationProps = {
   migrate: () => Promise<void>
 }
 
-// Component that demonstrates using the store hooks
 export const OldImplementation: React.FC<OldImplementationProps> = ({ migrate }) => {
-  // Get auth state and actions
   const [store, dispatch] = useStore()
   const [biometricSupported, setBiometricSupported] = useState<boolean>(false)
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
   const [loading, setLoading] = useState<boolean>(false)
 
   const checkBiometricAvailability = async () => {
@@ -120,7 +117,6 @@ export const OldImplementation: React.FC<OldImplementationProps> = ({ migrate })
       // In a real app, you'd get this from user input
       const pin = '123456'
 
-      // Generate the secret from the PIN
       const valid = await checkPIN(pin)
 
       if (valid) {
@@ -196,7 +192,7 @@ export const OldImplementation: React.FC<OldImplementationProps> = ({ migrate })
     try {
       dispatch({ type: 'STATE_DISPATCH', payload: initialState })
       await clearAllKeychainData()
-      await storageService.clear()
+      await resetState(dispatch)
     } catch (error) {
       console.error('Failed to wipe data:', error)
     }
@@ -232,7 +228,9 @@ export const OldImplementation: React.FC<OldImplementationProps> = ({ migrate })
         {store.authentication.didAuthenticate ? 'Welcome' : 'Please login'}
       </Text>
 
-      {store.authentication.didAuthenticate ? (
+      {loading ? (
+        <ActivityIndicator />
+      ) : store.authentication.didAuthenticate ? (
         <>
           <Text
             style={[
@@ -283,7 +281,7 @@ export const OldImplementation: React.FC<OldImplementationProps> = ({ migrate })
               ]}
             >
               Biometrics:{' '}
-              {store.settings.biometricsEnabled ? 'Enabled' : 'Disabled'}
+              {store.settings.biometricsEnabled ? `Enabled with ${biometryType}` : 'Disabled'}
             </Text>
             <Button
               title={
@@ -304,11 +302,17 @@ export const OldImplementation: React.FC<OldImplementationProps> = ({ migrate })
         </>
       )}
       
-      {/* Always visible buttons */}
-      <View style={styles.buttonContainer}>
-        <Button title="Wipe Data" onPress={handleWipe} />
-        <Button title="Migrate to New Store" onPress={handleMigrate} />
-      </View>
+      {!loading && (
+        <>
+          <View style={styles.buttonContainer}>
+            <Button title="Wipe Data" onPress={handleWipe} />
+          </View>
+          <View style={styles.buttonContainer}>
+            <Button title="Migrate to New Store" onPress={handleMigrate} />
+          </View>
+        </>
+      )}
+
     </View>
   )
 }

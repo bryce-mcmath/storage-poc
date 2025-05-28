@@ -1,39 +1,40 @@
 import React, { useEffect, useState } from 'react'
 import { useAuthStore } from './authStore'
 import { useSettingsStore } from './settingsStore'
-import { Text, View, Button, StyleSheet, Alert, Platform } from 'react-native'
-import { secureStorageService, storageService } from './storage'
+import {
+  Text,
+  View,
+  Button,
+  StyleSheet,
+  Alert,
+  ActivityIndicator,
+} from 'react-native'
+import { secureStorageService } from './storage'
+import { resetState } from './resetState'
 
 type NewImplementationProps = {
   migrate: () => Promise<void>
 }
 
-// Example component that uses both stores
-export const NewImplementation: React.FC<NewImplementationProps> = ({ migrate }) => {
-  // Auth store values and actions
-  const { 
-    didAuthenticate, 
-    accountCreated,
-    createAccount,
-    setDidAuthenticate
-  } = useAuthStore()
+export const NewImplementation: React.FC<NewImplementationProps> = ({
+  migrate,
+}) => {
+  const { didAuthenticate, accountCreated, createAccount, setDidAuthenticate } =
+    useAuthStore()
 
-  // Settings store values and actions
-  const { 
-    theme, 
-    language, 
-    notifications, 
+  const {
+    theme,
+    language,
+    notifications,
     biometricsEnabled,
-    setTheme, 
+    setTheme,
     toggleNotifications,
-    toggleBiometrics
+    toggleBiometrics,
   } = useSettingsStore()
 
-  // Local state
   const [biometricSupported, setBiometricSupported] = useState<boolean>(false)
   const [loading, setLoading] = useState<boolean>(false)
 
-  // Check if biometrics is available on device
   useEffect(() => {
     checkBiometricAvailability()
   }, [])
@@ -51,7 +52,6 @@ export const NewImplementation: React.FC<NewImplementationProps> = ({ migrate })
     }
   }
 
-  // Handle create account
   const handleCreateAccount = async () => {
     try {
       setLoading(true)
@@ -72,7 +72,6 @@ export const NewImplementation: React.FC<NewImplementationProps> = ({ migrate })
     }
   }
 
-  // Create account with biometrics
   const createAccountWithBiometrics = async () => {
     try {
       if (!biometricSupported) {
@@ -99,7 +98,6 @@ export const NewImplementation: React.FC<NewImplementationProps> = ({ migrate })
     }
   }
 
-  // Create account without biometrics
   const createAccountWithoutBiometrics = async () => {
     const pin = '123456'
     const valid = await secureStorageService.setPIN(pin, false)
@@ -108,7 +106,6 @@ export const NewImplementation: React.FC<NewImplementationProps> = ({ migrate })
     }
   }
 
-  // Handle unlock
   const handleUnlock = async () => {
     try {
       setLoading(true)
@@ -124,7 +121,6 @@ export const NewImplementation: React.FC<NewImplementationProps> = ({ migrate })
     }
   }
 
-  // Unlock with biometrics
   const unlockWithBiometrics = async () => {
     try {
       if (!biometricSupported) {
@@ -154,14 +150,12 @@ export const NewImplementation: React.FC<NewImplementationProps> = ({ migrate })
     }
   }
 
-  // Unlock with PIN
   const unlockWithPIN = async () => {
     try {
       // For demo purposes, we're using a hardcoded PIN
       // In a real app, you'd get this from user input
       const pin = '123456'
 
-      // Generate the secret from the PIN
       const valid = await secureStorageService.checkPIN(pin)
 
       if (valid) {
@@ -176,34 +170,27 @@ export const NewImplementation: React.FC<NewImplementationProps> = ({ migrate })
     }
   }
 
-  // Handle logout
   const handleLogout = async () => {
     setDidAuthenticate(false)
   }
 
-  // Toggle theme
   const handleToggleTheme = () => {
     setTheme(theme === 'light' ? 'dark' : 'light')
   }
 
-  // Handle wipe
   const handleWipe = async () => {
     try {
       await secureStorageService.clearAllKeychainData()
-      await storageService.clear()
-      setDidAuthenticate(false)
+      await resetState()
     } catch (error) {
       console.error('Failed to wipe data:', error)
     }
   }
 
-  // Handle migrate
   const handleMigrate = async () => {
     console.log('Switching to old implementation...')
     await migrate()
   }
-
-  // Loading state removed as we've simplified the state
 
   return (
     <View
@@ -213,10 +200,7 @@ export const NewImplementation: React.FC<NewImplementationProps> = ({ migrate })
       ]}
     >
       <Text
-        style={[
-          styles.title,
-          { color: theme === 'light' ? '#000' : '#fff' },
-        ]}
+        style={[styles.title, { color: theme === 'light' ? '#000' : '#fff' }]}
       >
         Zustand + MMKV
       </Text>
@@ -226,33 +210,37 @@ export const NewImplementation: React.FC<NewImplementationProps> = ({ migrate })
         {didAuthenticate ? 'Welcome' : 'Please login'}
       </Text>
 
-      {didAuthenticate ? (
+      {loading ? (
+        <ActivityIndicator />
+      ) : didAuthenticate ? (
         <>
           <Text
-            style={[styles.text, { color: theme === 'light' ? '#000' : '#fff' }]}
+            style={[
+              styles.text,
+              { color: theme === 'light' ? '#000' : '#fff' },
+            ]}
           >
             Current language: {language}
           </Text>
 
           <Text
-            style={[styles.text, { color: theme === 'light' ? '#000' : '#fff' }]}
+            style={[
+              styles.text,
+              { color: theme === 'light' ? '#000' : '#fff' },
+            ]}
           >
             Notifications: {notifications ? 'Enabled' : 'Disabled'}
           </Text>
           <View style={styles.buttonContainer}>
             <Button
-              title={`Switch to ${
-                theme === 'light' ? 'Dark' : 'Light'
-              } Theme`}
+              title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Theme`}
               onPress={handleToggleTheme}
             />
           </View>
 
           <View style={styles.buttonContainer}>
             <Button
-              title={`${
-                notifications ? 'Disable' : 'Enable'
-              } Notifications`}
+              title={`${notifications ? 'Disable' : 'Enable'} Notifications`}
               onPress={toggleNotifications}
             />
           </View>
@@ -269,14 +257,11 @@ export const NewImplementation: React.FC<NewImplementationProps> = ({ migrate })
                 { color: theme === 'light' ? '#000' : '#fff' },
               ]}
             >
-              Biometrics:{' '}
-              {biometricsEnabled ? 'Enabled' : 'Disabled'}
+              Biometrics: {biometricsEnabled ? 'Enabled' : 'Disabled'}
             </Text>
             <Button
               title={
-                biometricsEnabled
-                  ? 'Disable Biometrics'
-                  : 'Enable Biometrics'
+                biometricsEnabled ? 'Disable Biometrics' : 'Enable Biometrics'
               }
               onPress={toggleBiometrics}
             />
@@ -290,12 +275,17 @@ export const NewImplementation: React.FC<NewImplementationProps> = ({ migrate })
           </View>
         </>
       )}
-      
-      {/* Always visible buttons */}
-      <View style={styles.buttonContainer}>
-        <Button title="Wipe Data" onPress={handleWipe} />
-        <Button title="Switch to Old View" onPress={handleMigrate} />
-      </View>
+
+      {!loading && (
+        <>
+          <View style={styles.buttonContainer}>
+            <Button title="Wipe Data" onPress={handleWipe} />
+          </View>
+          <View style={styles.buttonContainer}>
+            <Button title="Switch to Old View" onPress={handleMigrate} />
+          </View>
+        </>
+      )}
     </View>
   )
 }

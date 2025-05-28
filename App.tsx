@@ -8,15 +8,12 @@ import {
   SafeAreaView,
 } from 'react-native'
 
-// Import existing implementation components
 import { StoreProvider } from './src/existing/StoreProvider'
 import { OldImplementation } from './src/existing/OldImplementation'
 
-// Import new implementation components
 import { NewImplementation } from './src/new/NewImplementation'
 import { PerformanceComparison } from './src/new/PerformanceComparison'
 
-// Import migration service
 import { migrateFromExistingToNew } from './src/migrationService'
 import { secureStorageService, storageService } from './src/new/storage'
 
@@ -57,11 +54,18 @@ export default function App() {
         ) : (
           <PerformanceComparison />
         )}
-        {implementationView !== 'performance' && (
+        {implementationView !== 'performance' ? (
           <View style={styles.buttonContainer}>
             <Button
               title="View Performance Comparison"
               onPress={() => setImplementationView('performance')}
+            />
+          </View>
+        ) : (
+          <View style={styles.buttonContainer}>
+            <Button
+              title="Back to Implementations"
+              onPress={() => setImplementationView('context')}
             />
           </View>
         )}

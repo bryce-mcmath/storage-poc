@@ -6,6 +6,7 @@ import { zustandMMKVStorage } from './mmkvZustandAdapter'
 const initialAuthState: AuthState = {
   didAuthenticate: false,
   accountCreated: false,
+  didMigrate: false,
 }
 
 export const useAuthStore = create<
@@ -23,6 +24,7 @@ export const useAuthStore = create<
         set({
           accountCreated: true,
           didAuthenticate: true,
+          didMigrate: true,
         })
       },
 

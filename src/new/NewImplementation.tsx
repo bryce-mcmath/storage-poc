@@ -39,6 +39,10 @@ export const NewImplementation: React.FC<NewImplementationProps> = ({
     checkBiometricAvailability()
   }, [])
 
+  useEffect(() => {
+    console.log('accountCreated:', accountCreated)
+  }, [accountCreated])
+
   const checkBiometricAvailability = async () => {
     try {
       const isSupported = await secureStorageService.isBiometricsActive()

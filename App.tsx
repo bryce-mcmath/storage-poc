@@ -6,22 +6,26 @@ import {
   ScrollView,
   Button,
   SafeAreaView,
+  Alert,
 } from 'react-native'
 
 import { StoreProvider } from './src/existing/StoreProvider'
 import { OldImplementation } from './src/existing/OldImplementation'
+import { storageService as existingStorageService } from './src/existing/storage'
+import { clearAllKeychainData as clearExistingKeychainData } from './src/existing/keychain'
 
 import { NewImplementation } from './src/new/NewImplementation'
 import { PerformanceComparison } from './src/new/PerformanceComparison'
 
 import { migrateFromExistingToNew } from './src/migrationService'
 import { secureStorageService, storageService } from './src/new/storage'
+import { useAuthStore } from './src/new/authStore'
 
-// Main app component
 export default function App() {
+  const { didMigrate } = useAuthStore()
   const [implementationView, setImplementationView] = useState<
     'context' | 'zustand' | 'performance'
-  >('context')
+  >(didMigrate ? 'zustand' : 'context')
 
   return (
     <SafeAreaView style={styles.container}>
@@ -41,11 +45,9 @@ export default function App() {
         ) : implementationView === 'zustand' ? (
           <NewImplementation
             migrate={async () => {
-              // No migration back to context needed
               console.log(
                 'Migration from new to old is not supported, clearing all data and switching to old implementation',
               )
-              // Just switch the view directly
               await secureStorageService.clearAllKeychainData()
               await storageService.clear()
               setImplementationView('context')

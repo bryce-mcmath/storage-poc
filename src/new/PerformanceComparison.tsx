@@ -10,7 +10,6 @@ interface PerformanceResult {
   improvement: string
 }
 
-// Sample data for testing with different sizes
 const generateTestData = (size: 'small' | 'medium' | 'large'): any => {
   switch (size) {
     case 'small':
@@ -66,47 +65,66 @@ export const PerformanceComparison: React.FC = () => {
   const [results, setResults] = useState<PerformanceResult[]>([])
   const [isRunning, setIsRunning] = useState(false)
 
-  // Clear all storage before tests
   const clearStorage = async () => {
-    await AsyncStorage.clear()
-    storage.clearAll()
-  }
-
-  // Run a single write test
-  const runWriteTest = async (
-    size: 'small' | 'medium' | 'large',
-  ): Promise<PerformanceResult> => {
-    const data = generateTestData(size)
-    const key = `test-${size}`
-    const jsonValue = JSON.stringify(data)
-
-    // AsyncStorage write test
-    const asyncStart = performance.now()
-    await AsyncStorage.setItem(key, jsonValue)
-    const asyncEnd = performance.now()
-    const asyncTime = asyncEnd - asyncStart
-
-    // MMKV write test
-    const mmkvStart = performance.now()
-    storage.set(key, jsonValue)
-    const mmkvEnd = performance.now()
-    const mmkvTime = mmkvEnd - mmkvStart
-
-    // Calculate improvement percentage
-    const improvement =
-      asyncTime > 0
-        ? `${(((asyncTime - mmkvTime) / asyncTime) * 100).toFixed(1)}%`
-        : 'N/A'
-
-    return {
-      operation: `Write (${size})`,
-      asyncStorageTime: asyncTime,
-      mmkvTime: mmkvTime,
-      improvement,
+    try {
+      await AsyncStorage.clear()
+      
+      try {
+        const allKeys = storage.getAllKeys()
+        allKeys.forEach(key => {
+          storage.delete(key)
+        })
+        
+        storage.clearAll()
+      } catch (error) {
+        console.log('Non-critical error clearing MMKV storage:', error)
+      }
+    } catch (error) {
+      console.error('Error clearing storage:', error)
+      throw error
     }
   }
 
-  // Run a single read test
+  const runWriteTest = async (
+    size: 'small' | 'medium' | 'large',
+  ): Promise<PerformanceResult> => {
+    try {
+      const data = generateTestData(size)
+      const key = `test-${size}`
+      const jsonValue = JSON.stringify(data)
+
+      const asyncStart = performance.now()
+      await AsyncStorage.setItem(key, jsonValue)
+      const asyncEnd = performance.now()
+      const asyncTime = asyncEnd - asyncStart
+
+      const mmkvStart = performance.now()
+      storage.set(key, jsonValue)
+      const mmkvEnd = performance.now()
+      const mmkvTime = mmkvEnd - mmkvStart
+
+      const improvement =
+        asyncTime > 0
+          ? `${(((asyncTime - mmkvTime) / asyncTime) * 100).toFixed(1)}%`
+          : 'N/A'
+
+      return {
+        operation: `Write (${size})`,
+        asyncStorageTime: asyncTime,
+        mmkvTime: mmkvTime,
+        improvement,
+      }
+    } catch (error) {
+      console.error(`Error in write test (${size}):`, error)
+      return {
+        operation: `Write (${size}) - Error`,
+        asyncStorageTime: 0,
+        mmkvTime: 0,
+        improvement: 'Error',
+      }
+    }
+  }
+
   const runReadTest = async (
     size: 'small' | 'medium' | 'large',
   ): Promise<PerformanceResult> => {
@@ -114,23 +132,19 @@ export const PerformanceComparison: React.FC = () => {
     const key = `test-${size}`
     const jsonValue = JSON.stringify(data)
 
-    // Pre-populate storage
     await AsyncStorage.setItem(key, jsonValue)
     storage.set(key, jsonValue)
 
-    // AsyncStorage read test
     const asyncStart = performance.now()
     await AsyncStorage.getItem(key)
     const asyncEnd = performance.now()
     const asyncTime = asyncEnd - asyncStart
 
-    // MMKV read test
     const mmkvStart = performance.now()
     storage.getString(key)
     const mmkvEnd = performance.now()
     const mmkvTime = mmkvEnd - mmkvStart
 
-    // Calculate improvement percentage
     const improvement =
       asyncTime > 0
         ? `${(((asyncTime - mmkvTime) / asyncTime) * 100).toFixed(1)}%`
@@ -144,13 +158,11 @@ export const PerformanceComparison: React.FC = () => {
     }
   }
 
-  // Run a multi-operation test (100 writes + 100 reads)
   const runBulkTest = async (size: 'small'): Promise<PerformanceResult> => {
     const operations = 100
     const data = generateTestData(size)
     const jsonValue = JSON.stringify(data)
 
-    // AsyncStorage bulk test
     const asyncStart = performance.now()
     for (let i = 0; i < operations; i++) {
       await AsyncStorage.setItem(`bulk-${i}`, jsonValue)
@@ -159,7 +171,6 @@ export const PerformanceComparison: React.FC = () => {
     const asyncEnd = performance.now()
     const asyncTime = asyncEnd - asyncStart
 
-    // MMKV bulk test
     const mmkvStart = performance.now()
     for (let i = 0; i < operations; i++) {
       storage.set(`bulk-${i}`, jsonValue)
@@ -168,7 +179,6 @@ export const PerformanceComparison: React.FC = () => {
     const mmkvEnd = performance.now()
     const mmkvTime = mmkvEnd - mmkvStart
 
-    // Calculate improvement percentage
     const improvement =
       asyncTime > 0
         ? `${(((asyncTime - mmkvTime) / asyncTime) * 100).toFixed(1)}%`
@@ -181,8 +191,7 @@ export const PerformanceComparison: React.FC = () => {
       improvement,
     }
   }
-
-  // Run all tests
+  
   const runAllTests = async () => {
     setIsRunning(true)
     setResults([])
@@ -190,17 +199,15 @@ export const PerformanceComparison: React.FC = () => {
     try {
       await clearStorage()
 
-      // Write tests
       const smallWriteResult = await runWriteTest('small')
       setResults(prev => [...prev, smallWriteResult])
 
       const mediumWriteResult = await runWriteTest('medium')
-      setResults(prev => [...prev, mediumWriteResult])
+      setResults(prev => [...prev, mediumWriteResult]) 
 
       const largeWriteResult = await runWriteTest('large')
       setResults(prev => [...prev, largeWriteResult])
 
-      // Read tests
       const smallReadResult = await runReadTest('small')
       setResults(prev => [...prev, smallReadResult])
 
@@ -210,7 +217,6 @@ export const PerformanceComparison: React.FC = () => {
       const largeReadResult = await runReadTest('large')
       setResults(prev => [...prev, largeReadResult])
 
-      // Bulk operations test
       const bulkResult = await runBulkTest('small')
       setResults(prev => [...prev, bulkResult])
     } catch (error) {

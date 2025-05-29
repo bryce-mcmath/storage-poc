@@ -4,6 +4,7 @@
 export interface AuthState {
   didAuthenticate: boolean
   accountCreated: boolean
+  didMigrate: boolean
 }
 
 export interface SettingsState {

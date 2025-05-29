@@ -11,8 +11,6 @@ import {
 
 import { StoreProvider } from './src/existing/StoreProvider'
 import { OldImplementation } from './src/existing/OldImplementation'
-import { storageService as existingStorageService } from './src/existing/storage'
-import { clearAllKeychainData as clearExistingKeychainData } from './src/existing/keychain'
 
 import { NewImplementation } from './src/new/NewImplementation'
 import { PerformanceComparison } from './src/new/PerformanceComparison'
